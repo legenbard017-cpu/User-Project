@@ -1,0 +1,186 @@
+<?php
+
+namespace App\Entity;
+
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use App\Controller\UserCreateAction;
+use App\Repository\UserRepository;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
+
+#[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ApiResource(
+
+    operations: [
+
+        new GetCollection(),
+        new Post(
+
+            uriTemplate: '/users/craete',
+            controller: UserCreateAction::class,
+            name: 'userCreate'
+
+        ),
+        new Delete(),
+
+    ],
+
+
+    normalizationContext: ['groups' => ['user:read',]],
+    denormalizationContext: ['groups' => ['user:write',]],
+    paginationItemsPerPage: 10
+
+)]
+#[ApiFilter(SearchFilter::class, properties: [
+
+    'id' => 'exact',
+    'fullName' => 'partial',
+    'surName' => 'partial',
+
+
+])]
+#[ApiFilter(OrderFilter::class, properties: ['id'])]
+#[UniqueEntity('email', message: 'This email has already been taken.')]
+
+
+class User
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Email can not be empty.')]
+    #[Assert\Email(message: 'Email format is invalid.')]
+    #[Groups(['user:write', 'user:read'])]
+    private ?string $email = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'name can not be empty.')]
+    #[groups(['user:write', 'user:read'])]
+    private ?string $fullName = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Surname can not be empty.')]
+    #[groups(['user:write', 'user:read'])]
+    private ?string $surName = null;
+
+    #[ORM\Column]
+    #[Assert\NotBlank(message: 'age can not be empty.')]
+    #[Assert\Range(min: 1, max: 80)]
+    #[groups(['user:write', 'user:read'])]
+    private ?int $age = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Password can not be empty.')]
+    #[Assert\Length(
+        min: 8,
+        minMessage: 'Password must be more then 8 letters.',)]
+    #[groups(['user:write'])]
+    private ?string $password = null;
+
+    #[ORM\Column(length: 255)]
+    private array $userRole = ["USER_ROLE"];
+
+    #[ORM\Column]
+    #[Groups(['user:read', 'user:write'])]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): static
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    public function getFullName(): ?string
+    {
+        return $this->fullName;
+    }
+
+    public function setFullName(string $fullName): static
+    {
+        $this->fullName = $fullName;
+
+        return $this;
+    }
+
+    public function getSurName(): ?string
+    {
+        return $this->surName;
+    }
+
+    public function setSurName(string $surName): static
+    {
+        $this->surName = $surName;
+
+        return $this;
+    }
+
+    public function getAge(): ?int
+    {
+        return $this->age;
+    }
+
+    public function setAge(int $age): static
+    {
+        $this->age = $age;
+
+        return $this;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): static
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    public function getUserRole(): ?string
+    {
+        return $this->userRole;
+    }
+
+    public function setUserRole(string $userRole): static
+    {
+        $this->userRole = $userRole;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+}
