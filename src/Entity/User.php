@@ -13,10 +13,14 @@ use App\Controller\UserCreateAction;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[UniqueEntity(['email'], message: 'This email has already been taken.')]
+
 #[ApiResource(
 
     operations: [
@@ -24,9 +28,15 @@ use Symfony\Component\Validator\Constraints as Assert;
         new GetCollection(),
         new Post(
 
-            uriTemplate: '/users/craete',
+            uriTemplate: '/users/create',
             controller: UserCreateAction::class,
             name: 'userCreate'
+
+        ),
+        new Post(
+
+            uriTemplate: '/users/auth',
+            name: 'userAuth'
 
         ),
         new Delete(),
@@ -48,10 +58,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 ])]
 #[ApiFilter(OrderFilter::class, properties: ['id'])]
-#[UniqueEntity('email', message: 'This email has already been taken.')]
 
-
-class User
+class User implements PasswordAuthenticatedUserInterface, UserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -92,7 +100,7 @@ class User
     private array $userRole = ["USER_ROLE"];
 
     #[ORM\Column]
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function getId(): ?int
@@ -182,5 +190,19 @@ class User
         $this->createdAt = $createdAt;
 
         return $this;
+    }
+
+    public function getRoles(): array
+    {
+        return ['ROLE_USER'];
+    }
+
+    public function eraseCredentials(): void
+    {
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->getEmail();
     }
 }
